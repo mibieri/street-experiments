@@ -1,0 +1,171 @@
+
+@Order(0)
+@Enum(valuesAttr=_marking_labels)
+attr Marking_Left = _dashed
+
+@Order(1)
+attr Marking_Left_Shared = true
+
+@Order(2)
+@Enum(valuesAttr=_marking_labels)
+attr Marking_Right = _continuous
+
+@Order(3)
+attr Marking_Right_Shared = false
+
+@Order(4)
+@Enum(valuesAttr=_bar_labels)
+attr Stop_Bar = _none
+
+
+@Hidden
+attr _marking_labels = [_none, _continuous, _dashed, _double]
+const _none = "None"
+const _continuous = "Continuous"
+const _dashed = "Dashed"
+const _double = "Double"
+
+const line_width = 0.2
+const line_margin = 0.1
+const dash_length = 3
+const dash_gap_length = 2
+
+@Hidden
+attr _bar_labels = [_none, _begin, _end]
+const _begin = "Begin"
+const _end = "End"
+
+const bar_width = 0.5
+const bar_side_margin = 0.3
+const bar_front_margin = 0.5
+
+const _marking_widths = [
+	0,
+	2 * line_margin + line_width,
+	2 * line_margin + line_width,
+	3 * line_margin + 2 * line_width
+]
+
+const _marking_widths_shared = [
+	0,
+	line_width / 2,
+	line_width / 2,
+	line_margin + line_width
+]
+
+get(keys, key, values) = values[findFirst(keys, key)]
+
+
+getMarkingWidth(type, shared) with(
+	markingWidth := get(_marking_labels, type, _marking_widths)
+)=
+	case shared:
+		 get(_marking_labels, type, _marking_widths_shared)
+	else:
+		 get(_marking_labels, type, _marking_widths)
+	
+
+start Start -->
+	split(v, uvSpace, 1){
+		getMarkingWidth(Marking_Right, Marking_Right_Shared): MarkingRight |
+		~1: InnerLane |
+		getMarkingWidth(Marking_Left, Marking_Left_Shared):	MarkingLeft
+	}
+	
+InnerLane -->
+	StopBar
+
+
+MarkingRight -->
+	Marking(Marking_Right, Marking_Right_Shared)
+
+
+MarkingLeft -->
+	Marking(Marking_Left, Marking_Left_Shared)
+
+
+Marking(type, shared) -->
+	case type == _continuous:
+		MarkingContinous(shared)
+	case type == _dashed:
+		MarkingDashed(shared)
+	case type == _double:
+		MarkingDouble(shared)
+	else:
+		NIL
+
+
+MarkingContinous(shared) -->
+	case shared:
+		Paint
+	else:
+		split(v, uvSpace, 1){
+			~line_margin: Asphalt |
+			line_width: Paint |
+			~line_margin: Asphalt
+		}
+
+
+MarkingDashed(shared) -->
+	case shared:
+		DashedLine
+	else:
+		split(v, uvSpace, 1){
+			~line_margin: Asphalt |
+			line_width: DashedLine |
+			~line_margin: Asphalt
+		}
+		
+MarkingDouble(shared) -->
+	case shared:
+		split(v, uvSpace, 1){
+			~line_margin / 2: Asphalt |
+			line_width: Paint |
+			~line_margin / 2: Asphalt
+		}
+	else:
+		split(v, uvSpace, 1){
+			~line_margin: Asphalt |
+			line_width: Paint |
+			~line_margin: Asphalt |
+			line_width: Paint |
+			~line_margin: Asphalt
+		}	
+	
+
+DashedLine -->
+	split(u, uvSpace, 1){~dash_gap_length: Asphalt | {dash_length: Paint | ~dash_gap_length: Asphalt}*}
+
+
+StopBar -->
+	case Stop_Bar == _none:
+		Asphalt
+	case Stop_Bar == _begin:
+		split(u, uvSpace, 1){
+			bar_front_margin: Asphalt |
+			bar_width: StopBarInner |
+			~1: Asphalt
+		}
+	case Stop_Bar == _end:
+		split(u, uvSpace, 1){
+			~1: Asphalt |
+			bar_width: StopBarInner |
+			bar_front_margin: Asphalt
+		}
+	else:
+		NIL
+
+
+StopBarInner -->
+	split(v, uvSpace, 1){
+		bar_side_margin: Asphalt |
+		~1: Paint |
+		bar_side_margin: Asphalt
+	}
+	
+
+Paint -->
+	color("#FFFFFF") Paint.
+
+Asphalt -->
+	color("#333333") Asphalt.

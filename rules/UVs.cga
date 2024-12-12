@@ -1,0 +1,10 @@
+version "2025.0"
+
+@Enum(0,1,2)
+attr uvSet = 0
+
+@StartRule
+start showUV --> copyUV(uvSet,0) texture("builtin:uvtest.png")
+
+Street --> showUV
+Sidewalk --> showUV
