@@ -1,0 +1,41 @@
+attr StreetWidth = 12
+
+const gap_width = 0.5
+const bar_width = 1
+const u_margin = 1.0
+
+start Start -->
+	split(u, unitSpace, 1){
+		u_margin: Asphalt |
+		~1: ConsistentCrosswalk
+		|
+		u_margin: Asphalt
+	}
+	
+ConsistentCrosswalk with(
+	v0 := geometry.vMin(0)
+	v1 := geometry.vMin(1)
+	street_width := StreetWidth
+	n_bars := ceil((street_width - gap_width) / (bar_width + gap_width))
+	gap_width_corrected := (street_width - n_bars * bar_width) / (n_bars + 1)
+	combo_width := bar_width + gap_width_corrected
+	local_combo_start := combo_width * ceil(v1 / combo_width) - v1
+	first_gap_width := min(local_combo_start - bar_width, gap_width_corrected)
+	first_bar_width := min(local_combo_start, bar_width)
+) -->
+	print(n_bars)
+	split(v, unitSpace, 1){
+		first_gap_width: Asphalt |
+		first_bar_width: Paint | 
+		{
+			gap_width_corrected: Asphalt | 
+			bar_width: Paint
+		}*
+	}
+
+	
+Paint -->
+	color("#FFFFFF") Paint.
+
+Asphalt -->
+	color("#333333") Asphalt.

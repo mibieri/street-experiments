@@ -1,0 +1,25 @@
+const gap_width = 0.5
+const bar_width = 1
+const u_margin = 1.0
+
+start Start -->
+	split(u, unitSpace, 1){
+		u_margin: Asphalt |
+		~1: 
+			split(v, unitSpace, 1){
+				~gap_width: Asphalt | 
+				{
+					bar_width: Paint | 
+					~gap_width: Asphalt
+				}*
+			}
+		|
+		u_margin: Asphalt
+	}
+
+	
+Paint -->
+	color("#FFFFFF") Paint.
+
+Asphalt -->
+	color("#333333") Asphalt.

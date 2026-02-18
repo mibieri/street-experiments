@@ -1,0 +1,49 @@
+attr Split = true
+attr SetupUV = true
+
+const uvSet = 1
+
+start Start -->
+	inline(append) {
+		[ 
+		case SetupUV: 
+			setupProjection(uvSet, scope.xz, 1, 1)
+			projectUV(uvSet)
+			Return.
+		else:
+			Return.
+		]
+	}
+	copyUV(1, 0)
+	texture("builtin:uvtest.png")
+	SplitRow
+	
+SplitRow -->
+	split(u, unitSpace, uvSet){
+		1: X. |
+		1: SplitBlock |
+		1: inline(append){ SplitLength } X. |
+		1: inline(append){ SplitLength } SplitBlock |
+		1: inline(append){ SplitLength } SplitBlockRelative
+	}
+	
+SplitLength -->
+	case Split:
+		split(v, unitSpace, uvSet){
+			~1: Return. | ~2: Return. | ~0.5: Return.
+		}
+	else:
+		Return.
+	
+
+SplitBlock -->
+	split(v, uvSpace, uvSet){
+		1: extrude(1) X. | 1: NIL 
+	}*
+	
+	
+SplitBlockRelative -->
+	split(v, uvSpace, uvSet){
+		{1: extrude(1) X. | ~1: NIL}* |
+		1: extrude(1) X.
+	}
